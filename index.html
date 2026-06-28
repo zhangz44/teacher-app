@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>教师助手 · 课表与工时</title>
+    <style>
+        :root {
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --primary: #4f46e5;
+            --primary-light: #eef2ff;
+            --accent: #f59e0b;
+            --danger: #ef4444;
+            --success: #10b981;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            --radius: 16px;
+            --radius-sm: 12px;
+            --font-xs: 0.8rem;
+            --font-sm: 0.9rem;
+            --font-md: 1rem;
+            --font-lg: 1.1rem;
+            --font-xl: 1.3rem;
+            --font-2xl: 1.8rem;
+            --nav-height: 72px;
+            --transition: 0.2s ease;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .app-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            max-width: 500px;
+            width: 100%;
+            margin: 0 auto;
+            background: var(--bg);
+            position: relative;
+        }
+
+        .status-bar {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: var(--font-sm);
+            color: var(--text-secondary);
+            flex-shrink: 0;
+            background: var(--bg);
+            gap: 8px;
+        }
+
+        .username-area {
+            flex: 1;
+            text-align: left;
+        }
+
+        .username-badge {
+            cursor: pointer;
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: var(--font-sm);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .app-title {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: var(--font-lg);
+            text-align: center;
+            flex: 1;
+        }
+
+        .date-display {
+            flex: 1;
+            text-align: right;
+            font-weight: 600;
+            color: var(--text);
+            font-size: var(--font-sm);
+        }
+
+        .page-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 16px 12px;
+            display: none;
+            scroll-behavior: smooth;
+        }
+
+        .page-content.active {
+            display: block;
+        }
+
+        .page-content::-webkit-scrollbar {
+            width: 0;
+        }
+
+        .page-content.disabled {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .bottom-nav {
+            display: flex;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            height: var(--nav-height);
+            padding-bottom: env(safe-area-inset-bottom, 0);
+            box-shadow: 0 -1px 8px rgba(0, 0, 0, 0.03);
+            flex-shrink: 0;
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: var(--font-xs);
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 28px;
+            height: 3px;
+            border-radius: 0 0 4px 4px;
+            background: var(--primary);
+        }
+
+        .nav-icon {
+            font-size: 1.6rem;
+        }
+
+        .card {
+            background: var(--card);
+            border-radius: var(--radius);
+            padding: 18px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .card-title {
+            font-weight: 700;
+            font-size: var(--font-lg);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px;
+            border-radius: 24px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: var(--font-sm);
+            transition: var(--transition);
+            white-space: nowrap;
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+        }
+
+        .btn-outline {
+            background: var(--card);
+            color: var(--primary);
+            border: 1.5px solid var(--primary);
+        }
+
+        .btn-outline:active {
+            background: var(--primary-light);
+        }
+
+        .btn-sm {
+            padding: 6px 14px;
+            font-size: 0.8rem;
+            border-radius: 18px;
+        }
+
+        .btn-danger {
+            background: #fef2f2;
+            color: var(--danger);
+            border: 1px solid #fecaca;
+        }
+
+        .btn-icon {
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            border-radius: 50%;
+            background: var(--bg);
+            color: var(--text);
+            border: 1px solid var(--border);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .btn-large {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            font-size: var(--font-md);
+            border-radius: var(--radius-sm);
+            margin-top: 14px;
+            font-weight: 700;
+        }
+
+        .btn-confirm-orange {
+            background: #f97316;
+            color: #fff;
+        }
+
+        .btn-confirm-green {
+            background: #10b981;
+            color: #fff;
+        }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .tag-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+        }
+
+        .stat-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .stat-item {
+            flex: 1;
+            background: #f8fafc;
+            border-radius: var(--radius-sm);
+            padding: 16px 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: var(--font-2xl);
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .stat-value.salary {
+            color: #059669;
+        }
+
+        .stat-label {
+            font-size: var(--font-xs);
+            color: var(--text-secondary);
+            margin-top: 6px;
+        }
+
+        .schedule-grid {
+            display: grid;
+            gap: 2px;
+            background: #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .schedule-header,
+        .schedule-row {
+            display: grid;
+            grid-template-columns: 70px repeat(auto-fit, minmax(70px, 1fr));
+        }
+
+        .schedule-header>div,
+        .schedule-row>div {
+            background: #fff;
+            padding: 10px 4px;
+            text-align: center;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            min-height: 52px;
+            word-break: break-word;
+            line-height: 1.3;
+        }
+
+        .schedule-header>div:first-child,
+        .schedule-row>div:first-child {
+            font-weight: 700;
+            background: #f8fafc;
+            color: var(--text-secondary);
+        }
+
+        .schedule-cell {
+            cursor: pointer;
+            transition: background 0.15s;
+            position: relative;
+            border-left: 3px solid transparent;
+            background: #ffffff;
+        }
+
+        .schedule-cell:hover {
+            background: #f5f7ff;
+        }
+
+        .schedule-cell.confirmed {
+            background: #ecfdf5;
+            border-left-color: var(--success);
+        }
+
+        .schedule-cell.unconfirmed {
+            background: #fff7ed;
+            border-left-color: var(--accent);
+        }
+
+        .schedule-cell .cell-content {
+            font-size: 0.75rem;
+            font-weight: 600;
+            line-height: 1.3;
+            padding: 4px;
+        }
+
+        .confirm-badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-size: 0.8rem;
+        }
+
+        .today-row {
+            background: #fef2f2 !important;
+        }
+
+        .today-row>div {
+            background: #fef2f2;
+            border-bottom: 2px solid var(--danger);
+        }
+
+        .week-day-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reminder-card {
+            background: #fffbeb;
+            border: 1.5px solid #fcd34d;
+            border-radius: var(--radius);
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: pulse 2s infinite;
+            margin-bottom: 10px;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.2);
+            }
+
+            50% {
+                box-shadow: 0 0 0 8px rgba(245, 158, 11, 0);
+            }
+        }
+
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.5);
+            z-index: 200;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            animation: fadeIn 0.2s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal-sheet {
+            background: var(--card);
+            border-radius: 20px 20px 0 0;
+            width: 100%;
+            max-width: 500px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 24px 20px 32px;
+            animation: slideUp 0.25s;
+            box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: var(--font-sm);
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: var(--font-md);
+            font-family: inherit;
+            background: #f9fafb;
+            color: var(--text);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--primary);
+            outline: none;
+            background: #fff;
+        }
+
+        .lesson-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 0.9rem;
+        }
+
+        .lesson-time {
+            font-weight: 700;
+            min-width: 90px;
+        }
+
+        .history-collapse {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .history-collapse.open {
+            max-height: 2000px;
+        }
+
+        .filter-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .filter-row input {
+            flex: 1;
+            min-width: 140px;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+
+        .note-highlight {
+            background: #fef9c3;
+            padding: 0 4px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+
+        .side-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 50%;
+            height: 100%;
+            background: var(--card);
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+            z-index: 300;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            padding: 24px 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .side-panel.open {
+            transform: translateX(0);
+        }
+
+        .side-panel .avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .side-panel input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+
+        .side-panel .btn-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .side-panel .btn {
+            flex: 1;
+        }
+
+        .side-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 250;
+            display: none;
+        }
+
+        .side-overlay.show {
+            display: block;
+        }
+
+        .autocomplete-dropdown {
+            position: absolute;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: calc(100% - 28px);
+            max-height: 180px;
+            overflow-y: auto;
+            z-index: 50;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+
+        .autocomplete-dropdown div {
+            padding: 10px 14px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .autocomplete-dropdown div:hover {
+            background: #f1f5f9;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container" id="appContainer">
+        <div class="status-bar">
+            <div class="username-area"><span class="username-badge" id="usernameDisplay" onclick="openSidePanel()">👤
+                    <span id="usernameText">请登录</span></span></div>
+            <div class="app-title">📋 教师助手</div>
+            <div class="date-display" id="statusDate"></div>
+        </div>
+        <div class="page-content active disabled" id="pageSummary">
+            <div style="padding:8px 0 4px;"><span style="font-size:var(--font-2xl);font-weight:800;"
+                    id="summaryDayName"></span></div>
+            <div id="reminderArea"></div>
+            <div class="card">
+                <div class="card-header"><span class="card-title">📅 今日课程</span><span id="todayLessonCount"></span>
+                </div>
+                <div id="todoInline"></div>
+                <div id="todayLessonsList"></div>
+            </div>
+            <div class="card" style="opacity:0.95;">
+                <div class="card-header"><span class="card-title">📆 明日课程预览</span><span id="tomorrowLessonCount"></span>
+                </div>
+                <div id="tomorrowLessonsList"></div>
+            </div>
+            <div class="card" style="background:#f9fafb;">
+                <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;"
+                    onclick="toggleHistory()"><span
+                        style="font-weight:600;font-size:0.9rem;color:var(--text-secondary);">📜 历史记录</span><span
+                        id="historyArrow">▼</span></div>
+                <div class="history-collapse" id="historyCollapse">
+                    <div style="margin-top:10px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;"><button
+                            class="btn btn-sm btn-outline" onclick="shiftHistoryDay(-1)">◀ 前一天</button><span
+                            id="historyDateLabel" style="font-weight:600;font-size:0.85rem;"></span><button
+                            class="btn btn-sm btn-outline" onclick="shiftHistoryDay(1)">后一天 ▶</button><button
+                            class="btn btn-sm btn-outline" onclick="resetHistoryDay()">今天</button></div>
+                    <div id="historyLessonsList" style="margin-top:8px;"></div>
+                    <div style="font-weight:600;font-size:0.8rem;margin-top:10px;">📝 历史待办</div>
+                    <div id="historyTodosList"></div>
+                </div>
+            </div>
+        </div>
+        <div class="page-content disabled" id="pageSchedule">
+            <div class="card" style="padding:14px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+                    <div style="display:flex;align-items:center;gap:8px;"><button class="btn btn-icon"
+                            onclick="changeWeek(-1)">◀</button><span style="font-weight:700;font-size:var(--font-sm);"
+                            id="weekLabel"></span><button class="btn btn-icon" onclick="changeWeek(1)">▶</button><button
+                            class="btn btn-sm btn-outline" onclick="goToCurrentWeek()">本周</button></div><button
+                        class="btn btn-sm btn-outline" onclick="openTimeSlotSettings()">⚙️时段</button>
+                </div>
+            </div>
+            <div class="card" style="padding:10px;">
+                <div id="scheduleGridContainer"></div>
+            </div>
+            <button class="btn btn-large btn-confirm-orange" id="confirmModeBtn" onclick="toggleConfirmMode()">🔍
+                进入课消</button>
+            <div class="card" style="margin-top:10px;">
+                <div style="font-size:0.8rem;font-weight:600;color:var(--text-secondary);margin-bottom:8px;">机构图例</div>
+                <div id="institutionLegend" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+            </div>
+        </div>
+        <div class="page-content disabled" id="pageWorkHours">
+            <div class="card" style="padding:12px;">
+                <div style="display:flex;gap:6px;justify-content:center;" class="mode-tabs"><button
+                        class="btn btn-sm mode-tab active" data-mode="week" onclick="switchWorkMode('week')">📊
+                        周</button><button class="btn btn-sm mode-tab" data-mode="month"
+                        onclick="switchWorkMode('month')">📅 月</button><button class="btn btn-sm mode-tab"
+                        data-mode="day" onclick="switchWorkMode('day')">📋 日</button></div>
+                <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px;"><button
+                        class="btn btn-icon" onclick="shiftWorkPeriod(-1)">◀</button><span id="workPeriodLabel"
+                        style="font-weight:700;font-size:var(--font-sm);"></span><button class="btn btn-icon"
+                        onclick="shiftWorkPeriod(1)">▶</button><button class="btn btn-sm btn-outline"
+                        onclick="resetWorkPeriod()">本周</button></div>
+            </div>
+            <div class="card">
+                <div class="stat-row">
+                    <div class="stat-item">
+                        <div class="stat-value" id="statTotalClasses">0</div>
+                        <div class="stat-label">课次</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value salary" id="statTotalSalary">¥0</div>
+                        <div class="stat-label">薪资</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header"><span class="card-title">机构课消</span><button class="btn btn-sm btn-outline"
+                        onclick="openInstitutionManager()">管理</button></div>
+                <div id="institutionBreakdown"></div>
+            </div>
+            <div class="card">
+                <div class="card-header"><span class="card-title">课程明细</span></div>
+                <div class="filter-row"><input type="text" id="detailFilter" placeholder="搜索姓名/机构/日期..."
+                        oninput="renderWorkHours()"></div>
+                <div id="workDetailList"></div>
+            </div>
+        </div>
+        <div class="bottom-nav">
+            <div class="nav-item active" data-page="pageSummary" onclick="switchPage('pageSummary')"><span
+                    class="nav-icon">🏠</span>今日</div>
+            <div class="nav-item" data-page="pageSchedule" onclick="switchPage('pageSchedule')"><span
+                    class="nav-icon">📅</span>课表</div>
+            <div class="nav-item" data-page="pageWorkHours" onclick="switchPage('pageWorkHours')"><span
+                    class="nav-icon">⏱️</span>工时</div>
+        </div>
+    </div>
+    <div class="side-overlay" id="sideOverlay" onclick="closeSidePanel()"></div>
+    <div class="side-panel" id="sidePanel">
+        <div style="text-align:right;"><button class="btn btn-sm btn-outline" onclick="closeSidePanel()">✕ 关闭</button>
+        </div>
+        <div class="avatar">👤</div>
+        <input type="text" id="usernameInput" placeholder="输入用户名（2-3个汉字）" maxlength="3" style="text-align:center;">
+        <button class="btn" id="loginActionBtn" onclick="handleLoginAction()">请登录</button>
+        <div class="btn-row">
+            <button class="btn btn-outline" onclick="exportData()">📤 导出数据</button>
+            <button class="btn btn-outline" onclick="importData()">📥 导入数据</button>
+        </div>
+        <div style="font-size:0.75rem;color:var(--text-secondary);margin-top:4px;">
+            <p>数据说明：您的所有记录保存在浏览器中，导出为文件可备份至电脑或网盘，需要时通过“导入”恢复。</p>
+        </div>
+        <button class="btn btn-outline" onclick="alert('云端同步功能即将上线，敬请期待')" style="margin-top:8px;">☁️ 上传云端（开发中）</button>
+    </div>
+    <div id="modalContainer"></div>
+
+    <script>
+        (function () {
+            let currentUsername = '';
+            let lastExportTime = 0;
+            const AUTO_EXPORT_INTERVAL = 48 * 60 * 60 * 1000;
+
+            function getStorageKey() { return `teacher_app_v15_${currentUsername}`; }
+            function getRemindKey() { return `teacher_remind_${currentUsername}`; }
+            function getExportTimeKey() { return `last_export_${currentUsername}`; }
+
+            function hslToHex(h, s, l) {
+                s /= 100; l /= 100;
+                const a = s * Math.min(l, 1 - l);
+                const f = n => { const k = (n + h / 30) % 12; const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); return Math.round(255 * color).toString(16).padStart(2, '0'); };
+                return `#${f(0)}${f(8)}${f(4)}`;
+            }
+            function generateUniqueColor() {
+                const usedColors = new Set(appData.institutions.filter(i => !i.deleted).map(i => i.color));
+                for (let i = 0; i < 100; i++) {
+                    const hue = Math.floor(Math.random() * 360);
+                    const color = hslToHex(hue, 50, 50);
+                    if (!usedColors.has(color)) return color;
+                }
+                return '#888888';
+            }
+
+            const DEFAULT_TIME_SLOTS = [
+                { start: '08:40', end: '10:40' },
+                { start: '10:40', end: '12:40' },
+                { start: '13:30', end: '15:30' },
+                { start: '15:30', end: '17:30' },
+            ];
+            const GRADES = ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级(预初)', '初一', '初二', '初三', '高一', '高二', '高三'];
+            const SUBJECTS = ['语文', '数学', '英语', '物理', '化学', '生物', '政治', '历史', '地理'];
+            const NOTE_OPTIONS = [
+                { value: '', label: '默认(1课次)' },
+                { value: '0.25', label: '0.25课次' },
+                { value: '0.5', label: '0.5课次' },
+                { value: '0.75', label: '0.75课次' }
+            ];
+
+            let appData = { institutions: [], lessons: [], timeSlots: [...DEFAULT_TIME_SLOTS], todos: [] };
+            let currentPage = 'pageSummary';
+            let weekOffset = 0;
+            let workMode = 'week';
+            let workWeekOffset = 0, workDayOffset = 0, workMonthOffset = 0;
+            let confirmModeActive = false;
+            let remindedKeys = {};
+            let historyOpen = false;
+            let historyDateOffset = -1;
+
+            function save() { if (currentUsername) localStorage.setItem(getStorageKey(), JSON.stringify(appData)); }
+            function load() {
+                if (!currentUsername) { appData = { institutions: [], lessons: [], timeSlots: [...DEFAULT_TIME_SLOTS], todos: [] }; return; }
+                try {
+                    const raw = localStorage.getItem(getStorageKey());
+                    if (raw) {
+                        const d = JSON.parse(raw);
+                        appData.institutions = d.institutions || [];
+                        appData.lessons = (d.lessons || []).filter(l => l && l.date && l.startTime && l.endTime).map(l => ({ ...l, confirmed: l.confirmed ?? false, subject: l.subject || '', classNote: l.classNote || '' }));
+                        appData.timeSlots = d.timeSlots || [...DEFAULT_TIME_SLOTS];
+                        appData.todos = d.todos || [];
+                    } else {
+                        appData = { institutions: [], lessons: [], timeSlots: [...DEFAULT_TIME_SLOTS], todos: [] };
+                    }
+                } catch (e) { appData = { institutions: [], lessons: [], timeSlots: [...DEFAULT_TIME_SLOTS], todos: [] }; }
+                try { const r = localStorage.getItem(getRemindKey()); if (r) remindedKeys = JSON.parse(r); } catch (e) { }
+            }
+            function saveRemind() { if (currentUsername) localStorage.setItem(getRemindKey(), JSON.stringify(remindedKeys)); }
+            function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+            function getMonday(d) { const date = new Date(d); date.setHours(0, 0, 0, 0); const day = date.getDay(); const diff = day === 0 ? -6 : 1 - day; date.setDate(date.getDate() + diff); return date; }
+            function formatDate(d) { const y = d.getFullYear(); const m = String(d.getMonth() + 1).padStart(2, '0'); const day = String(d.getDate()).padStart(2, '0'); return `${y}-${m}-${day}`; }
+            function formatShort(d) { return `${d.getMonth() + 1}月${d.getDate()}日`; }
+            function dayName(d) { return ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][d.getDay()]; }
+            function timeToMin(t) { if (!t || typeof t !== 'string' || !t.includes(':')) return 0; const parts = t.split(':').map(Number); return (parts[0] || 0) * 60 + (parts[1] || 0); }
+            function minToTime(m) { const h = Math.floor(m / 60) % 24, min = m % 60; return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`; }
+
+            function getLessonsByDate(date) { const s = formatDate(date); return appData.lessons.filter(l => l.date === s && l.startTime).sort((a, b) => timeToMin(a.startTime) - timeToMin(b.startTime)); }
+            function getLessonsByWeek(offset) { const mon = getMonday(new Date()); mon.setDate(mon.getDate() + offset * 7); const start = formatDate(mon); const endDate = new Date(mon); endDate.setDate(endDate.getDate() + 6); const end = formatDate(endDate); return appData.lessons.filter(l => l.date >= start && l.date <= end && l.startTime).sort((a, b) => a.date.localeCompare(b.date) || timeToMin(a.startTime) - timeToMin(b.startTime)); }
+            function getLessonsByMonth(year, month) { const start = `${year}-${String(month).padStart(2, '0')}-01`; const lastDay = new Date(year, month, 0).getDate(); const end = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`; return appData.lessons.filter(l => l.date >= start && l.date <= end && l.startTime).sort((a, b) => a.date.localeCompare(b.date) || timeToMin(a.startTime) - timeToMin(b.startTime)); }
+            function getInst(id) { return appData.institutions.find(i => i.id === id) || null; }
+
+            function getLessonUnits(lesson) {
+                if (lesson.classNote && !isNaN(parseFloat(lesson.classNote))) return parseFloat(lesson.classNote);
+                const duration = (timeToMin(lesson.endTime) - timeToMin(lesson.startTime)) / 60;
+                return duration / 2;
+            }
+
+            function calcStats(lessons) {
+                let totalClasses = 0, totalSalary = 0;
+                const byInst = {};
+                lessons.forEach(l => {
+                    if (!l.startTime || !l.endTime) return;
+                    const units = getLessonUnits(l);
+                    const inst = getInst(l.institutionId);
+                    const price = inst ? inst.price : 0;
+                    const salary = price * units;
+                    totalClasses += units; totalSalary += salary;
+                    const key = l.institutionId || 'unknown';
+                    if (!byInst[key]) byInst[key] = { inst, classes: 0, salary: 0, count: 0 };
+                    byInst[key].classes += units; byInst[key].salary += salary; byInst[key].count += 1;
+                });
+                return { totalClasses, totalSalary, byInst };
+            }
+
+            function getStudentMemory() {
+                const thirtyDaysAgo = new Date();
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                const since = formatDate(thirtyDaysAgo);
+                const map = new Map();
+                appData.lessons.forEach(l => {
+                    if (l.date >= since && l.studentName) {
+                        const existing = map.get(l.studentName);
+                        if (!existing || l.date > existing.date || (l.date === existing.date && timeToMin(l.startTime) > timeToMin(existing.startTime))) {
+                            map.set(l.studentName, l);
+                        }
+                    }
+                });
+                return Array.from(map.entries()).map(([name, lesson]) => ({
+                    name,
+                    grade: lesson.grade || '',
+                    subject: lesson.subject || '',
+                    institutionId: lesson.institutionId || '',
+                    classNote: lesson.classNote || ''
+                })).sort((a, b) => a.name.localeCompare(b.name));
+            }
+
+            function updateUIBasedOnLogin() {
+                const loggedIn = !!currentUsername;
+                document.querySelectorAll('.page-content').forEach(el => {
+                    if (loggedIn) el.classList.remove('disabled');
+                    else el.classList.add('disabled');
+                });
+                const btn = document.getElementById('loginActionBtn');
+                if (loggedIn) btn.textContent = '登出 / 切换';
+                else btn.textContent = '请登录';
+            }
+
+            window.switchPage = function (page) {
+                if (!currentUsername && page !== 'pageSummary') return;
+                currentPage = page;
+                document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                document.getElementById(page).classList.add('active');
+                const navItem = document.querySelector(`.nav-item[data-page="${page}"]`);
+                if (navItem) navItem.classList.add('active');
+                refreshPage();
+                autoExportIfNeeded();
+            };
+
+            function refreshPage() {
+                updateStatusDate();
+                if (currentPage === 'pageSummary') renderSummary();
+                else if (currentPage === 'pageSchedule') renderSchedule();
+                else if (currentPage === 'pageWorkHours') renderWorkHours();
+            }
+            function updateStatusDate() {
+                const now = new Date();
+                document.getElementById('statusDate').textContent = `${now.getMonth() + 1}月${now.getDate()}日 ${dayName(now)}`;
+            }
+
+            // ─────────── 今日板块 ───────────
+            function renderSummary() {
+                if (!currentUsername) { document.getElementById('todayLessonsList').innerHTML = '<div style="color:#94a3b8;text-align:center;padding:20px;">请先登录</div>'; return; }
+                const now = new Date();
+                document.getElementById('summaryDayName').textContent = dayName(now);
+                const todayStr = formatDate(now);
+                const todos = (appData.todos || []).filter(t => t.date === todayStr);
+                document.getElementById('todoInline').innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;"><span style="font-size:0.85rem;font-weight:600;color:var(--text-secondary);">📝 待办</span><a href="javascript:void(0)" onclick="addTodo()" style="font-size:0.8rem;color:var(--primary);">+ 添加</a></div>${todos.length === 0 ? '<div style="color:#94a3b8;font-size:0.8rem;">暂无待办</div>' : todos.map(t => `<div class="todo-item ${t.completed ? 'completed' : ''}"><input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTodo('${t.id}')"><span class="todo-text" style="flex:1;">${t.text}</span><button class="btn btn-sm btn-outline" style="padding:2px 6px;" onclick="editTodo('${t.id}')">✎</button><button class="btn btn-sm btn-danger" style="padding:2px 6px;" onclick="deleteTodo('${t.id}')">✕</button></div>`).join('')}`;
+                const todayLessons = getLessonsByDate(now);
+                document.getElementById('todayLessonCount').textContent = todayLessons.length ? `${todayLessons.length}节` : '';
+                document.getElementById('todayLessonsList').innerHTML = todayLessons.length ? todayLessons.map(l => lessonItemHTML(l)).join('') : '<div style="color:#94a3b8;text-align:center;padding:12px;">今日暂无课程</div>';
+                const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
+                const tomorrowLessons = getLessonsByDate(tomorrow);
+                document.getElementById('tomorrowLessonCount').textContent = tomorrowLessons.length ? `${tomorrowLessons.length}节` : '';
+                document.getElementById('tomorrowLessonsList').innerHTML = tomorrowLessons.length ? tomorrowLessons.map(l => lessonItemHTML(l)).join('') : '<div style="color:#94a3b8;text-align:center;padding:12px;">明日暂无课程</div>';
+                renderReminders(todayLessons);
+                renderHistorySection();
+            }
+            function lessonItemHTML(l) {
+                const inst = getInst(l.institutionId);
+                const color = inst?.color || '#64748b';
+                const note = l.classNote ? `<span class="note-highlight">${l.classNote}次</span>` : '';
+                return `<div class="lesson-row" style="border-left:3px solid ${color}; padding-left:10px; color:${color};"><span class="lesson-time">${l.startTime}-${l.endTime}</span><span style="font-weight:600;">${l.studentName || '学生'}</span><span class="tag" style="background:${color}20;color:${color};">${inst?.name || '未分类'}</span><span style="color:var(--text-secondary);font-size:0.8rem;">${l.grade || ''}</span>${l.subject ? `<span style="font-size:0.8rem;">${l.subject}</span>` : ''}${note}</div>`;
+            }
+            function renderReminders(lessons) {
+                const container = document.getElementById('reminderArea');
+                if (!lessons.length) { container.innerHTML = ''; return; }
+                const now = new Date(); const nowMin = now.getHours() * 60 + now.getMinutes();
+                const first = lessons[0]; const afterNoon = lessons.find(l => timeToMin(l.startTime) >= 12 * 60);
+                const candidates = []; if (first) candidates.push({ l: first, key: 'first' }); if (afterNoon && afterNoon !== first) candidates.push({ l: afterNoon, key: 'noon' });
+                const active = candidates.filter(c => { const start = timeToMin(c.l.startTime); if (nowMin >= start - 40 && nowMin < start) { const rKey = c.l.date + '_' + c.l.startTime + '_' + c.key; if (!remindedKeys[rKey]) { remindedKeys[rKey] = true; saveRemind(); return true; } } return false; });
+                container.innerHTML = active.map(a => `<div class="reminder-card"><span>⏰</span><div><strong>${a.key === 'first' ? '早上首节' : '午后首节'}</strong> ${a.l.studentName} · ${a.l.startTime}</div></div>`).join('');
+            }
+            window.toggleHistory = function () { historyOpen = !historyOpen; document.getElementById('historyCollapse').classList.toggle('open', historyOpen); document.getElementById('historyArrow').textContent = historyOpen ? '▲' : '▼'; if (historyOpen) renderHistorySection(); };
+            window.shiftHistoryDay = (d) => { historyDateOffset += d; renderHistorySection(); };
+            window.resetHistoryDay = () => { historyDateOffset = -1; renderHistorySection(); };
+            function renderHistorySection() {
+                if (!historyOpen) return;
+                const targetDate = new Date(); targetDate.setDate(targetDate.getDate() + historyDateOffset);
+                const dateStr = formatDate(targetDate);
+                document.getElementById('historyDateLabel').textContent = dateStr + ' ' + dayName(targetDate);
+                const lessons = getLessonsByDate(targetDate);
+                const todos = (appData.todos || []).filter(t => t.date === dateStr);
+                document.getElementById('historyLessonsList').innerHTML = lessons.length ? lessons.map(l => lessonItemHTML(l)).join('') : '<div style="color:#94a3b8;">无课程</div>';
+                document.getElementById('historyTodosList').innerHTML = todos.length ? todos.map(t => `<div class="todo-item ${t.completed ? 'completed' : ''}">${t.text}</div>`).join('') : '<div style="color:#94a3b8;">无待办</div>';
+            }
+            window.addTodo = () => { const text = prompt('输入待办'); if (text) { appData.todos.push({ id: uid(), date: formatDate(new Date()), text, completed: false }); save(); renderSummary(); } };
+            window.toggleTodo = (id) => { const t = appData.todos.find(t => t.id === id); if (t) { t.completed = !t.completed; save(); renderSummary(); } };
+            window.editTodo = (id) => { const t = appData.todos.find(t => t.id === id); if (t) { const text = prompt('编辑', t.text); if (text) { t.text = text; save(); renderSummary(); } } };
+            window.deleteTodo = (id) => { appData.todos = appData.todos.filter(t => t.id !== id); save(); renderSummary(); };
+
+            // ─────────── 课表板块 ───────────
+            function renderSchedule() {
+                const mon = getMonday(new Date()); mon.setDate(mon.getDate() + weekOffset * 7);
+                const days = Array.from({ length: 7 }, (_, i) => { const d = new Date(mon); d.setDate(d.getDate() + i); return d; });
+                document.getElementById('weekLabel').textContent = `${formatShort(mon)} - ${formatShort(days[6])}`;
+                const slots = appData.timeSlots;
+                const today = new Date();
+                let html = '<div class="schedule-grid"><div class="schedule-header"><div>星期</div>';
+                slots.forEach(s => html += `<div>${s.start}<br>${s.end}</div>`);
+                html += '</div>';
+                days.forEach(d => {
+                    const dateStr = formatDate(d); const isToday = formatDate(d) === formatDate(today);
+                    html += `<div class="schedule-row ${isToday ? 'today-row' : ''}"><div class="week-day-cell">${dayName(d)}<br><small>${formatShort(d)}</small></div>`;
+                    slots.forEach(slot => {
+                        const lesson = appData.lessons.find(l => l.date === dateStr && l.startTime === slot.start && l.endTime === slot.end);
+                        const inst = lesson ? getInst(lesson.institutionId) : null;
+                        const color = inst?.color || '#94a3b8';
+                        let cls = 'schedule-cell'; if (lesson) cls += lesson.confirmed ? ' confirmed' : ' unconfirmed';
+                        html += `<div class="${cls}" onclick="handleScheduleClick('${dateStr}','${slot.start}','${slot.end}','${lesson?.id || ''}')"><div class="cell-content" style="color:${lesson ? color : '#cbd5e1'}">${lesson ? `${lesson.studentName || '学生'}<br><small>${lesson.grade || ''}</small>` : ''}</div>${lesson?.confirmed ? '<span class="confirm-badge">✓</span>' : ''}</div>`;
+                    });
+                    html += '</div>';
+                });
+                html += '</div>';
+                document.getElementById('scheduleGridContainer').innerHTML = html;
+                renderInstitutionLegend();
+            }
+            function renderInstitutionLegend() {
+                document.getElementById('institutionLegend').innerHTML = appData.institutions.filter(i => !i.deleted).map(i => `<span class="tag" style="background:${i.color}15;color:${i.color};"><span class="tag-dot" style="background:${i.color};"></span>${i.name} ¥${i.price}</span>`).join('');
+            }
+            window.handleScheduleClick = (date, start, end, lessonId) => {
+                if (!currentUsername) return;
+                if (confirmModeActive) {
+                    const lesson = lessonId ? appData.lessons.find(l => l.id === lessonId) : null;
+                    if (lesson) { lesson.confirmed = !lesson.confirmed; save(); renderSchedule(); }
+                } else {
+                    if (appData.institutions.filter(i => !i.deleted).length === 0) { alert('请先在工时 → 机构课消 → 管理中至少添加一个机构'); return; }
+                    openLessonModal(date, start, end, lessonId);
+                }
+            };
+            window.toggleConfirmMode = () => {
+                confirmModeActive = !confirmModeActive;
+                const btn = document.getElementById('confirmModeBtn');
+                if (confirmModeActive) { btn.textContent = '✅ 完成课消'; btn.classList.remove('btn-confirm-orange'); btn.classList.add('btn-confirm-green'); }
+                else { btn.textContent = '🔍 进入课消'; btn.classList.remove('btn-confirm-green'); btn.classList.add('btn-confirm-orange'); }
+            };
+            window.changeWeek = (d) => { weekOffset += d; renderSchedule(); };
+            window.goToCurrentWeek = () => { weekOffset = 0; renderSchedule(); };
+            function openLessonModal(date, start, end, lessonId) {
+                if (!currentUsername) return;
+                const existing = lessonId ? appData.lessons.find(l => l.id === lessonId) : null;
+                const activeInsts = appData.institutions.filter(i => !i.deleted);
+                const instOpts = activeInsts.map(i => `<option value="${i.id}" ${existing && existing.institutionId === i.id ? 'selected' : ''}>${i.name}</option>`).join('');
+                const gradeOpts = GRADES.map(g => `<option value="${g}" ${existing && existing.grade === g ? 'selected' : ''}>${g}</option>`).join('');
+                const subjectOpts = SUBJECTS.map(s => `<option value="${s}" ${existing && existing.subject === s ? 'selected' : ''}>${s}</option>`).join('');
+                const noteOpts = NOTE_OPTIONS.map(n => `<option value="${n.value}" ${existing && existing.classNote === n.value ? 'selected' : ''}>${n.label}</option>`).join('');
+                document.getElementById('modalContainer').innerHTML = `<div class="modal-overlay" onclick="closeModal()"><div class="modal-sheet" onclick="event.stopPropagation()"><h3>${existing ? '编辑课程' : '添加课程'}</h3><div style="margin-bottom:14px;color:var(--text-secondary);">${date} ${start}-${end}</div><div class="form-group" style="position:relative;"><label>学生姓名 *</label><input id="lesName" value="${existing?.studentName || ''}" autocomplete="off" oninput="handleNameInput(this)"><div class="autocomplete-dropdown" id="nameDropdown"></div></div><div class="form-group"><label>年级 *</label><select id="lesGrade"><option value="">请选择</option>${gradeOpts}</select></div><div class="form-group"><label>机构 *</label><select id="lesInst"><option value="">请选择</option>${instOpts}</select></div><div class="form-group"><label>学科</label><select id="lesSubject"><option value="">不限</option>${subjectOpts}</select></div><div class="form-group"><label>课次备注</label><select id="lesNote">${noteOpts}</select></div><div class="form-group"><label>内容</label><textarea id="lesContent">${existing?.content || ''}</textarea></div><div style="display:flex;gap:8px;"><button class="btn" onclick="saveLesson('${date}','${start}','${end}','${lessonId}')">保存</button>${existing ? `<button class="btn btn-danger" onclick="deleteLesson('${existing.id}')">删除</button>` : ''}<button class="btn btn-outline" onclick="closeModal()">取消</button></div></div></div>`;
+                window.currentMemory = getStudentMemory();
+            }
+            window.handleNameInput = function (inputEl) {
+                const val = inputEl.value.trim();
+                const dropdown = document.getElementById('nameDropdown');
+                if (!val || val.length === 0) { dropdown.style.display = 'none'; return; }
+                const matches = window.currentMemory.filter(item => item.name.includes(val));
+                if (matches.length === 0) { dropdown.style.display = 'none'; return; }
+                dropdown.innerHTML = matches.map(item => `<div onclick="selectNameSuggestion('${item.name}')">${item.name}</div>`).join('');
+                dropdown.style.display = 'block';
+            };
+            window.selectNameSuggestion = function (name) {
+                document.getElementById('lesName').value = name;
+                document.getElementById('nameDropdown').style.display = 'none';
+                const mem = window.currentMemory.find(item => item.name === name);
+                if (mem) {
+                    if (mem.grade) document.getElementById('lesGrade').value = mem.grade;
+                    if (mem.institutionId) document.getElementById('lesInst').value = mem.institutionId;
+                    if (mem.subject) document.getElementById('lesSubject').value = mem.subject;
+                    if (mem.classNote !== undefined) document.getElementById('lesNote').value = mem.classNote;
+                }
+            };
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('#lesName')) { const dd = document.getElementById('nameDropdown'); if (dd) dd.style.display = 'none'; }
+            });
+            window.saveLesson = (date, start, end, id) => {
+                const name = document.getElementById('lesName').value.trim();
+                const grade = document.getElementById('lesGrade').value;
+                const instId = document.getElementById('lesInst').value;
+                const subject = document.getElementById('lesSubject').value;
+                const note = document.getElementById('lesNote').value;
+                const content = document.getElementById('lesContent').value.trim();
+                if (!name) return alert('请输入学生姓名');
+                if (!grade) return alert('请选择年级');
+                if (!instId) return alert('请选择机构');
+                if (id) {
+                    const l = appData.lessons.find(l => l.id === id);
+                    if (l) { l.studentName = name; l.grade = grade; l.institutionId = instId; l.subject = subject; l.classNote = note; l.content = content; }
+                } else {
+                    const exist = appData.lessons.find(l => l.date === date && l.startTime === start && l.endTime === end);
+                    if (exist) { exist.studentName = name; exist.grade = grade; exist.institutionId = instId; exist.subject = subject; exist.classNote = note; exist.content = content; }
+                    else appData.lessons.push({ id: uid(), date, startTime: start, endTime: end, studentName: name, grade, subject, classNote: note, content, institutionId: instId, confirmed: false });
+                }
+                save(); closeModal(); renderSchedule();
+            };
+            window.deleteLesson = (id) => { if (!confirm('确定删除？')) return; appData.lessons = appData.lessons.filter(l => l.id !== id); save(); closeModal(); renderSchedule(); };
+            window.closeModal = () => { document.getElementById('modalContainer').innerHTML = ''; };
+
+            // ─────────── 时段编辑 ───────────
+            window.openTimeSlotSettings = () => {
+                const list = appData.timeSlots.map((s, i) => `<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;"><input type="time" value="${s.start}" data-idx="${i}" data-field="start" onchange="autoAdjustEnd(this)" style="width:110px;"><span>至</span><input type="time" value="${s.end}" data-idx="${i}" data-field="end" style="width:110px;"><button class="btn btn-sm btn-danger" onclick="removeTimeSlot(${i})">✕</button></div>`).join('');
+                document.getElementById('modalContainer').innerHTML = `<div class="modal-overlay" onclick="closeModal()"><div class="modal-sheet" onclick="event.stopPropagation()"><h3>编辑时间段</h3>${list}<button class="btn btn-outline btn-sm" onclick="addTimeSlot()">+ 添加</button><div style="margin-top:14px;display:flex;gap:8px;"><button class="btn" onclick="saveTimeSlots()">保存</button><button class="btn btn-outline" onclick="resetTimeSlots()">默认</button><button class="btn btn-outline" onclick="closeModal()">取消</button></div></div></div>`;
+            };
+            window.autoAdjustEnd = (inp) => { const idx = parseInt(inp.dataset.idx); const val = inp.value; if (!val) return; const [h, m] = val.split(':').map(Number); const endInput = document.querySelector(`input[data-idx="${idx}"][data-field="end"]`); if (endInput) endInput.value = minToTime(h * 60 + m + 120); };
+            window.addTimeSlot = () => { const last = appData.timeSlots[appData.timeSlots.length - 1]; let s = '08:40', e = '10:40'; if (last) { const m = timeToMin(last.end); s = minToTime(m); e = minToTime(m + 120); } appData.timeSlots.push({ start: s, end: e }); openTimeSlotSettings(); };
+            window.removeTimeSlot = (i) => { if (appData.timeSlots.length <= 1) return alert('至少保留一个'); appData.timeSlots.splice(i, 1); openTimeSlotSettings(); };
+            window.saveTimeSlots = () => { const inputs = document.querySelectorAll('#modalContainer input[type="time"]'); const slots = []; inputs.forEach(inp => { const i = parseInt(inp.dataset.idx); if (!slots[i]) slots[i] = {}; slots[i][inp.dataset.field] = inp.value; }); const filtered = slots.filter(s => s && s.start && s.end); if (filtered.some(s => timeToMin(s.end) <= timeToMin(s.start))) return alert('结束需晚于开始'); if (filtered.length === 0) return alert('至少需要一个'); appData.timeSlots = filtered; save(); closeModal(); renderSchedule(); };
+            window.resetTimeSlots = () => { appData.timeSlots = DEFAULT_TIME_SLOTS.map(s => ({ ...s })); save(); closeModal(); renderSchedule(); };
+
+            // ─────────── 工时板块 ───────────
+            function renderWorkHours() {
+                updateWorkLabel();
+                let lessons = [];
+                const now = new Date();
+                if (workMode === 'week') lessons = getLessonsByWeek(workWeekOffset);
+                else if (workMode === 'month') { const y = now.getFullYear() + Math.floor((now.getMonth() + workMonthOffset) / 12); const m = ((now.getMonth() + workMonthOffset) % 12 + 12) % 12 + 1; lessons = getLessonsByMonth(y, m); }
+                else if (workMode === 'day') { const d = new Date(now); d.setDate(d.getDate() + workDayOffset); lessons = getLessonsByDate(d); }
+                const confirmed = lessons.filter(l => l.confirmed);
+                const stats = calcStats(confirmed);
+                document.getElementById('statTotalClasses').textContent = stats.totalClasses.toFixed(2);
+                document.getElementById('statTotalSalary').textContent = '¥' + Math.round(stats.totalSalary);
+                const activeInsts = appData.institutions.filter(i => !i.deleted);
+                document.getElementById('institutionBreakdown').innerHTML = activeInsts.length ? activeInsts.map(inst => { const data = stats.byInst[inst.id] || { classes: 0, salary: 0 }; return `<div style="display:flex;justify-content:space-between;padding:8px;border-left:3px solid ${inst.color};margin-bottom:6px;background:#f8fafc;border-radius:8px;color:${inst.color};"><span style="font-weight:600;">${inst.name}</span><span>${data.classes.toFixed(2)}课次</span><strong>¥${Math.round(data.salary)}</strong></div>`; }).join('') : '<div style="color:#94a3b8;">暂无机构，请点击管理添加</div>';
+                const filterText = document.getElementById('detailFilter')?.value?.toLowerCase() || '';
+                const filtered = filterText ? confirmed.filter(l => (l.studentName || '').includes(filterText) || (getInst(l.institutionId)?.name || '').includes(filterText) || l.date.includes(filterText)) : confirmed;
+                document.getElementById('workDetailList').innerHTML = filtered.length ? filtered.map(l => { const inst = getInst(l.institutionId); const units = getLessonUnits(l); const price = inst ? inst.price : 0; const color = inst?.color || '#64748b'; return `<div class="lesson-row" style="border-left:3px solid ${color}; padding-left:10px; color:${color}; justify-content:space-between;"><span style="min-width:70px;">${l.date}</span><span style="min-width:65px;">${l.startTime}-${l.endTime}</span><span style="font-weight:600;min-width:50px;">${l.studentName}</span><span style="min-width:45px;">${inst?.name || '未分类'}</span><span style="min-width:45px;">${units.toFixed(2)}次</span><span style="min-width:50px;">¥${Math.round(price * units)}</span></div>`; }).join('') : '<div style="color:#94a3b8;text-align:center;padding:12px;">无匹配课程</div>';
+            }
+            function updateWorkLabel() { const now = new Date(); if (workMode === 'week') { const m = getMonday(now); m.setDate(m.getDate() + workWeekOffset * 7); const e = new Date(m); e.setDate(e.getDate() + 6); document.getElementById('workPeriodLabel').textContent = `${formatShort(m)} - ${formatShort(e)}`; } else if (workMode === 'month') { const d = new Date(now.getFullYear(), now.getMonth() + workMonthOffset, 1); document.getElementById('workPeriodLabel').textContent = `${d.getFullYear()}年${d.getMonth() + 1}月`; } else { const d = new Date(now); d.setDate(d.getDate() + workDayOffset); document.getElementById('workPeriodLabel').textContent = formatDate(d); } }
+            window.switchWorkMode = (m) => { workMode = m; workWeekOffset = workDayOffset = workMonthOffset = 0; document.querySelectorAll('#pageWorkHours .mode-tab').forEach(b => b.classList.remove('active')); document.querySelector(`#pageWorkHours .mode-tab[data-mode="${m}"]`).classList.add('active'); renderWorkHours(); };
+            window.shiftWorkPeriod = (d) => { if (workMode === 'week') workWeekOffset += d; else if (workMode === 'month') workMonthOffset += d; else workDayOffset += d; renderWorkHours(); };
+            window.resetWorkPeriod = () => { workWeekOffset = workDayOffset = workMonthOffset = 0; renderWorkHours(); };
+
+            // ─────────── 机构管理 ───────────
+            window.openInstitutionManager = () => { const activeInsts = appData.institutions.filter(i => !i.deleted); const html = activeInsts.map(i => `<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;"><span class="color-dot" style="background:${i.color};cursor:pointer;width:20px;height:20px;border-radius:50%;" onclick="cycleColor('${i.id}')"></span><input value="${i.name}" data-iid="${i.id}" data-field="name" style="flex:1;padding:6px 8px;border:1px solid var(--border);border-radius:8px;"><span>¥</span><input type="number" value="${i.price}" data-iid="${i.id}" data-field="price" style="width:65px;padding:6px;border:1px solid var(--border);border-radius:8px;" step="10"><button class="btn btn-sm btn-danger" onclick="deleteInstitution('${i.id}')">✕</button></div>`).join(''); document.getElementById('modalContainer').innerHTML = `<div class="modal-overlay" onclick="closeModal()"><div class="modal-sheet" onclick="event.stopPropagation()"><h3>管理机构</h3>${html}<button class="btn btn-outline btn-sm" onclick="addInstitution()">+ 添加</button><button class="btn btn-outline btn-sm" style="margin-left:8px;" onclick="openHistoryManager()">📋 已删除</button><div style="margin-top:14px;"><button class="btn" onclick="saveInstitutions()">保存</button></div></div></div>`; };
+            window.openHistoryManager = () => { const deletedInsts = appData.institutions.filter(i => i.deleted); if (!deletedInsts.length) { alert('暂无已删除机构'); return; } document.getElementById('modalContainer').innerHTML = `<div class="modal-overlay" onclick="closeModal()"><div class="modal-sheet" onclick="event.stopPropagation()"><h3>已删除机构</h3>${deletedInsts.map(i => `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding:8px;background:#f8fafc;border-radius:8px;"><span class="tag" style="background:${i.color}15;color:${i.color};">${i.name}</span><button class="btn btn-sm btn-outline" onclick="restoreInstitution('${i.id}')">恢复</button><button class="btn btn-sm btn-danger" onclick="permanentlyDeleteInstitution('${i.id}')">彻底删除</button></div>`).join('')}<button class="btn btn-outline" onclick="openInstitutionManager()">返回</button></div></div>`; };
+            window.cycleColor = (id) => { const inst = appData.institutions.find(i => i.id === id); if (inst) { inst.color = generateUniqueColor(); openInstitutionManager(); } };
+            window.addInstitution = () => { const color = generateUniqueColor(); appData.institutions.push({ id: uid(), name: '新机构', color: color, price: 200, deleted: false }); openInstitutionManager(); };
+            window.deleteInstitution = (id) => { if (appData.institutions.filter(i => !i.deleted).length <= 1) return alert('至少保留一个'); const inst = appData.institutions.find(i => i.id === id); if (inst) inst.deleted = true; openInstitutionManager(); };
+            window.restoreInstitution = (id) => { const inst = appData.institutions.find(i => i.id === id); if (inst) inst.deleted = false; openHistoryManager(); };
+            window.permanentlyDeleteInstitution = (id) => { if (!confirm('彻底删除？')) return; appData.institutions = appData.institutions.filter(i => i.id !== id); save(); openHistoryManager(); };
+            window.saveInstitutions = () => { document.querySelectorAll('#modalContainer input[data-field="name"]').forEach(inp => { const inst = appData.institutions.find(i => i.id === inp.dataset.iid); if (inst) inst.name = inp.value.trim() || '未命名'; }); document.querySelectorAll('#modalContainer input[data-field="price"]').forEach(inp => { const inst = appData.institutions.find(i => i.id === inp.dataset.iid); if (inst) inst.price = Math.max(0, parseInt(inp.value) || 0); }); save(); closeModal(); refreshPage(); };
+
+            // ─────────── 导出 / 导入 / 自动备份 ───────────
+            function autoExportIfNeeded() {
+                if (!currentUsername) return;
+                const now = Date.now();
+                if (now - lastExportTime > AUTO_EXPORT_INTERVAL) {
+                    if (confirm('距离上次备份已超过48小时，是否立即备份数据文件？')) {
+                        exportData();
+                    } else {
+                        lastExportTime = now;
+                        localStorage.setItem(getExportTimeKey(), lastExportTime);
+                    }
+                }
+            }
+            window.exportData = function () {
+                if (!currentUsername) return alert('请先登录');
+                const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `教师助手_${currentUsername}_${new Date().toISOString().slice(0, 10)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                lastExportTime = Date.now();
+                localStorage.setItem(getExportTimeKey(), lastExportTime);
+            };
+            window.importData = function () {
+                if (!currentUsername) return alert('请先登录');
+                if (confirm('导入前将自动备份当前数据，确定继续吗？')) exportData();
+                const input = document.createElement('input');
+                input.type = 'file';
+                input.accept = '.json';
+                input.onchange = e => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = ev => {
+                        try {
+                            const data = JSON.parse(ev.target.result);
+                            if (data.lessons && data.timeSlots && data.todos) { appData = data; save(); alert('导入成功'); refreshPage(); }
+                            else alert('文件格式不正确');
+                        } catch (ex) { alert('解析失败'); }
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            };
+
+            // ─────────── 侧边栏与登录/登出 ───────────
+            window.openSidePanel = function () { document.getElementById('sidePanel').classList.add('open'); document.getElementById('sideOverlay').classList.add('show'); document.getElementById('usernameInput').value = currentUsername || ''; };
+            window.closeSidePanel = function () { document.getElementById('sidePanel').classList.remove('open'); document.getElementById('sideOverlay').classList.remove('show'); };
+            window.handleLoginAction = function () {
+                if (currentUsername) {
+                    const choice = confirm('点击“确定”切换用户，“取消”登出。\n（都将自动备份当前数据）');
+                    exportData();
+                    if (choice) {
+                        const input = document.getElementById('usernameInput').value.trim();
+                        if (input && /^[\u4e00-\u9fa5]{2,3}$/.test(input) && input !== currentUsername) {
+                            currentUsername = input;
+                            localStorage.setItem('current_username', currentUsername);
+                            document.getElementById('usernameText').textContent = currentUsername;
+                            document.getElementById('usernameDisplay').innerHTML = `👤 <span id="usernameText">${currentUsername}</span>`;
+                            load(); updateUIBasedOnLogin(); closeSidePanel(); refreshPage();
+                        } else alert('请输入有效的新用户名（2-3个汉字）');
+                    } else {
+                        currentUsername = '';
+                        localStorage.removeItem('current_username');
+                        document.getElementById('usernameText').textContent = '请登录';
+                        document.getElementById('usernameDisplay').innerHTML = '👤 <span id="usernameText">请登录</span>';
+                        appData = { institutions: [], lessons: [], timeSlots: [...DEFAULT_TIME_SLOTS], todos: [] };
+                        updateUIBasedOnLogin(); closeSidePanel(); refreshPage();
+                    }
+                } else {
+                    const input = document.getElementById('usernameInput').value.trim();
+                    if (!input || !/^[\u4e00-\u9fa5]{2,3}$/.test(input)) return alert('用户名必须是2-3个汉字');
+                    currentUsername = input;
+                    localStorage.setItem('current_username', currentUsername);
+                    document.getElementById('usernameText').textContent = currentUsername;
+                    document.getElementById('usernameDisplay').innerHTML = `👤 <span id="usernameText">${currentUsername}</span>`;
+                    load(); updateUIBasedOnLogin(); closeSidePanel(); refreshPage();
+                }
+            };
+
+            function initUser() {
+                const stored = localStorage.getItem('current_username');
+                if (stored && /^[\u4e00-\u9fa5]{2,3}$/.test(stored)) {
+                    currentUsername = stored;
+                    document.getElementById('usernameText').textContent = currentUsername;
+                    document.getElementById('usernameDisplay').innerHTML = `👤 <span id="usernameText">${currentUsername}</span>`;
+                    load();
+                    lastExportTime = parseInt(localStorage.getItem(getExportTimeKey()) || '0');
+                } else {
+                    currentUsername = '';
+                    document.getElementById('usernameText').textContent = '请登录';
+                    appData = { institutions: [], lessons: [], timeSlots: [...DEFAULT_TIME_SLOTS], todos: [] };
+                }
+                updateUIBasedOnLogin();
+            }
+
+            initUser();
+            updateStatusDate();
+            if (currentUsername) renderSummary();
+            else document.getElementById('todayLessonsList').innerHTML = '<div style="color:#94a3b8;text-align:center;padding:20px;">请先登录</div>';
+            setInterval(() => { if (currentPage === 'pageSummary' && currentUsername) renderSummary(); updateStatusDate(); autoExportIfNeeded(); }, 60000);
+        })();
+    </script>
+</body>
+
+</html>
