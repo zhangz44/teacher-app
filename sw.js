@@ -1,8 +1,8 @@
 const CACHE_NAME = 'teacher-app-v1';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json'
+  '/teacher-app/',
+  '/teacher-app/index.html',
+  '/teacher-app/manifest.json'
 ];
 
 self.addEventListener('install', event => {
